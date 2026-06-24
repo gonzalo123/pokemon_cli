@@ -30,14 +30,14 @@ code.
 
 The flow is deliberately boring:
 
-```text
-question
-   |
-   v
-LangChain agent ----> controlled tools ----> PokeAPI
-   |
-   v
-short explanation
+```mermaid
+flowchart TD
+    question["Question"] --> agent["LangChain agent"]
+    agent --> tools["Controlled tools"]
+    tools --> pokeapi["PokeAPI"]
+    pokeapi --> tools
+    tools --> agent
+    agent --> explanation["Short explanation"]
 ```
 
 The agent cannot fetch arbitrary URLs. It only receives five tools:
@@ -282,8 +282,8 @@ Python installation, dependency resolution, command execution and the lock
 file. I am not starting a package-manager religion here. It's just a test.
 
 ```bash
-git clone https://github.com/gonzalo123/pokemon-professor.git
-cd pokemon-professor
+git clone https://github.com/gonzalo123/pokemon_cli.git
+cd pokemon_cli
 
 uv python install 3.13
 uv sync --extra dev
