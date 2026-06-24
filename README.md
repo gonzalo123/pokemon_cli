@@ -21,6 +21,8 @@ as the reasoning layer.
 I don't want the model to remember Pikachu's Speed. I want the model to ask the
 tool.
 
+![logo](./img/logo.png)
+
 ## The idea
 
 The project is a Python 3.13 CLI built with Click, Rich, httpx, Pydantic and
