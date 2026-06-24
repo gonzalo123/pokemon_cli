@@ -7,14 +7,14 @@ from typing import Any
 from langchain.agents import create_agent
 from langchain.agents.structured_output import ToolStrategy
 
-from app.battle import predict_battle
-from app.comparison import compare_pokemon
-from app.config import Settings
-from app.llm import create_chat_model
-from app.models import BattlePrediction, PokemonComparison
-from app.pokeapi import PokeApiClient, normalize_identifier
-from app.prompts import BATTLE_PROMPT, COMPARISON_PROMPT, SYSTEM_PROMPT
-from app.tools import build_tools
+from battle import predict_battle
+from comparison import compare_pokemon
+from config import Settings
+from llm import create_chat_model
+from models import BattlePrediction, PokemonComparison
+from pokeapi import PokeApiClient, normalize_identifier
+from prompts import BATTLE_PROMPT, COMPARISON_PROMPT, SYSTEM_PROMPT
+from tools import build_tools
 
 
 def ask_agent(question: str, client: PokeApiClient, settings: Settings) -> str:

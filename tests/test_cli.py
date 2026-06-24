@@ -1,7 +1,18 @@
 import click
 import pytest
+from rich.markdown import Markdown
 
-from app import cli as cli_module
+import cli as cli_module
+
+
+def test_markdown_panel_renders_markdown_content() -> None:
+    panel = cli_module._markdown_panel(
+        "**Pikachu** is fast.",
+        title="Professor Oak",
+        border_style="green",
+    )
+
+    assert isinstance(panel.renderable, Markdown)
 
 
 def test_enter_accepts_best_pokemon_suggestion(client, monkeypatch) -> None:

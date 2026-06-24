@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 import pytest
 
-from app.pokeapi import PokeApiClient
+from pokeapi import PokeApiClient
 
 
 def pokemon_payload(

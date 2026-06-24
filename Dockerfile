@@ -27,5 +27,5 @@ ENV PATH="$APP_HOME/.venv/bin:$PATH"
 
 USER $APP_USER
 
-ENTRYPOINT ["python", "-m", "app.cli"]
+ENTRYPOINT ["python", "-m", "cli"]
 CMD ["--help"]

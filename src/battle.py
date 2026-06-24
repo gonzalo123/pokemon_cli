@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.models import BattlePrediction, PokemonSummary, TypeMatchup
-from app.pokeapi import PokeApiClient
+from models import BattlePrediction, PokemonSummary, TypeMatchup
+from pokeapi import PokeApiClient
 
 
 @dataclass(frozen=True)

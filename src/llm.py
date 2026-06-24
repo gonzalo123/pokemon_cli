@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.config import Settings
+from config import Settings
 
 
 class LlmConfigurationError(RuntimeError):

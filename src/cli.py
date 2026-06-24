@@ -4,24 +4,25 @@ import sys
 
 import click
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.text import Text
 
-from app.agent import (
+from agent import (
     ask_agent,
     ask_mock,
     explain_comparison,
     mock_comparison_explanation,
     refine_battle_prediction,
 )
-from app.battle import predict_battle
-from app.comparison import compare_pokemon
-from app.config import Settings
-from app.llm import LlmConfigurationError
-from app.models import PokemonSummary
-from app.pokeapi import PokeApiClient, PokeApiError, PokeApiNotFound
-from app.render import render_battle, render_comparison, render_pokemon
+from battle import predict_battle
+from comparison import compare_pokemon
+from config import Settings
+from llm import LlmConfigurationError
+from models import PokemonSummary
+from pokeapi import PokeApiClient, PokeApiError, PokeApiNotFound
+from render import render_battle, render_comparison, render_pokemon
 
 console = Console()
 
@@ -86,7 +87,7 @@ def compare(first: str, second: str, explain: bool, mock: bool) -> None:
                     if mock
                     else explain_comparison(comparison, settings)
                 )
-                console.print(Panel(text, title="Professor's note", border_style="cyan"))
+                console.print(_markdown_panel(text, title="Professor's note", border_style="cyan"))
     except (PokeApiError, LlmConfigurationError) as error:
         raise click.ClickException(str(error)) from error
 
@@ -124,13 +125,17 @@ def ask(question: str, mock: bool) -> None:
     try:
         with _client(settings) as client:
             answer = ask_mock(question, client) if mock else ask_agent(question, client, settings)
-            console.print(Panel(answer, title="Professor Oak", border_style="green"))
+            console.print(_markdown_panel(answer, title="Professor Oak", border_style="green"))
     except (PokeApiError, LlmConfigurationError, ValueError) as error:
         raise click.ClickException(str(error)) from error
 
 
 def _client(settings: Settings) -> PokeApiClient:
     return PokeApiClient(timeout=settings.pokeapi_timeout)
+
+
+def _markdown_panel(content: str, *, title: str, border_style: str) -> Panel:
+    return Panel(Markdown(content), title=title, border_style=border_style)
 
 
 def _resolve_pokemon(

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models import BattlePrediction, PokemonStat, PokemonSummary
+from models import BattlePrediction, PokemonStat, PokemonSummary
 
 
 def test_summary_exposes_stats_and_total() -> None:

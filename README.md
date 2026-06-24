@@ -57,17 +57,17 @@ reasons with their output.
 The deterministic commands work without AWS credentials:
 
 ```bash
-uv run python -m app.cli pokemon pikachu
-uv run python -m app.cli search charizrad
-uv run python -m app.cli compare charizard blastoise
+uv run python -m cli pokemon pikachu
+uv run python -m cli search charizrad
+uv run python -m cli compare charizard blastoise
 ```
 
 The commands involving reasoning can use Bedrock:
 
 ```bash
-uv run python -m app.cli compare charizard blastoise --explain
-uv run python -m app.cli battle charizard venusaur
-uv run python -m app.cli ask "Which Pokémon is faster, Gengar or Alakazam?"
+uv run python -m cli compare charizard blastoise --explain
+uv run python -m cli battle charizard venusaur
+uv run python -m cli ask "Which Pokémon is faster, Gengar or Alakazam?"
 ```
 
 ## The boring deterministic part
@@ -112,7 +112,7 @@ index from PokeAPI and keeps it in memory for the current process. Python's
 `SequenceMatcher` then ranks names locally:
 
 ```bash
-uv run python -m app.cli search charizrad
+uv run python -m cli search charizrad
 ```
 
 ```text
@@ -312,10 +312,10 @@ or its normal credential chain.
 Now the examples:
 
 ```bash
-uv run python -m app.cli pokemon pikachu
-uv run python -m app.cli compare charizard blastoise
-uv run python -m app.cli battle charizard venusaur
-uv run python -m app.cli ask \
+uv run python -m cli pokemon pikachu
+uv run python -m cli compare charizard blastoise
+uv run python -m cli battle charizard venusaur
+uv run python -m cli ask \
   "Which Pokémon is faster, Gengar or Alakazam?"
 ```
 

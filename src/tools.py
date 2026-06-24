@@ -4,8 +4,8 @@ from typing import Any
 
 from langchain_core.tools import BaseTool, tool
 
-from app.comparison import compare_pokemon as build_comparison
-from app.pokeapi import PokeApiClient
+from comparison import compare_pokemon as build_comparison
+from pokeapi import PokeApiClient
 
 
 def build_tools(client: PokeApiClient) -> list[BaseTool]:

@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from app.models import (
+from models import (
     EvolutionChain,
     PokemonStat,
     PokemonSuggestion,

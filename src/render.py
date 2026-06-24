@@ -7,7 +7,7 @@ from rich.progress_bar import ProgressBar
 from rich.table import Table
 from rich.text import Text
 
-from app.models import BattlePrediction, PokemonComparison, PokemonSummary
+from models import BattlePrediction, PokemonComparison, PokemonSummary
 
 
 def render_pokemon(pokemon: PokemonSummary, console: Console) -> None:

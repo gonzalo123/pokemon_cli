@@ -1,5 +1,5 @@
-from app.agent import ask_mock
-from app.tools import build_tools
+from agent import ask_mock
+from tools import build_tools
 
 
 def test_get_pokemon_tool_returns_normalized_data(client) -> None:
@@ -40,4 +40,3 @@ def test_mock_question_uses_real_tool_data_without_llm(client) -> None:
     assert "Alakazam is faster" in answer
     assert "Gengar: 110" in answer
     assert "Alakazam: 120" in answer
-

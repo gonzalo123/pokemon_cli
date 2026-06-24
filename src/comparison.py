@@ -1,4 +1,4 @@
-from app.models import PokemonComparison, PokemonSummary
+from models import PokemonComparison, PokemonSummary
 
 
 def compare_pokemon(

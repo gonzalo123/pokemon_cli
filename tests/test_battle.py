@@ -1,9 +1,9 @@
 from langchain.agents.structured_output import ToolStrategy
 
-from app import agent as agent_module
-from app.battle import predict_battle
-from app.config import Settings
-from app.models import BattlePrediction
+import agent as agent_module
+from battle import predict_battle
+from config import Settings
+from models import BattlePrediction
 
 
 def test_charizard_beats_venusaur_in_simplified_prediction(client) -> None:

@@ -1,6 +1,6 @@
 import pytest
 
-from app.pokeapi import PokeApiNotFound, normalize_identifier
+from pokeapi import PokeApiNotFound, normalize_identifier
 
 
 def test_identifier_normalization() -> None:
