@@ -30,8 +30,8 @@ dev = [
 pokemon-professor = "cli:cli"
 
 [project.urls]
-Homepage = "https://github.com/gonzalo123/pokemon-professor"
-Repository = "https://github.com/gonzalo123/pokemon-professor"
+Homepage = "https://github.com/gonzalo123/pokemon_cli"
+Repository = "https://github.com/gonzalo123/pokemon_cli"
 
 [build-system]
 requires = ["hatchling"]
