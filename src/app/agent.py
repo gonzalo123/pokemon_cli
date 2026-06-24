@@ -1,0 +1,210 @@
+from __future__ import annotations
+
+import json
+import re
+from typing import Any
+
+from langchain.agents import create_agent
+from langchain.agents.structured_output import ToolStrategy
+
+from app.battle import predict_battle
+from app.comparison import compare_pokemon
+from app.config import Settings
+from app.llm import create_chat_model
+from app.models import BattlePrediction, PokemonComparison
+from app.pokeapi import PokeApiClient, normalize_identifier
+from app.prompts import BATTLE_PROMPT, COMPARISON_PROMPT, SYSTEM_PROMPT
+from app.tools import build_tools
+
+
+def ask_agent(question: str, client: PokeApiClient, settings: Settings) -> str:
+    agent = create_agent(
+        model=create_chat_model(settings),
+        tools=build_tools(client),
+        system_prompt=SYSTEM_PROMPT,
+    )
+    result = agent.invoke({"messages": [{"role": "user", "content": question}]})
+    return _message_text(result["messages"][-1])
+
+
+def ask_mock(question: str, client: PokeApiClient) -> str:
+    normalized = question.strip()
+
+    match = re.search(
+        r"which (?:pok[eé]mon )?is faster[,:\s]+([a-z0-9 -]+?)\s+or\s+([a-z0-9 -]+?)[?.!]*$",
+        normalized,
+        re.IGNORECASE,
+    )
+    if match:
+        first, second = _pair(match)
+        comparison = compare_pokemon(client.get_pokemon(first), client.get_pokemon(second))
+        return _speed_answer(comparison)
+
+    match = re.search(
+        r"can\s+([a-z0-9 -]+?)\s+beat\s+([a-z0-9 -]+?)[?.!]*$",
+        normalized,
+        re.IGNORECASE,
+    )
+    if match:
+        first, second = _pair(match)
+        prediction = predict_battle(
+            client.get_pokemon(first),
+            client.get_pokemon(second),
+            client,
+        )
+        return _battle_answer(prediction)
+
+    match = re.search(
+        r"compare\s+([a-z0-9 -]+?)\s+(?:and|with|vs\.?)\s+([a-z0-9 -]+?)[?.!]*$",
+        normalized,
+        re.IGNORECASE,
+    )
+    if match:
+        first, second = _pair(match)
+        comparison = compare_pokemon(client.get_pokemon(first), client.get_pokemon(second))
+        return mock_comparison_explanation(comparison)
+
+    match = re.search(
+        r"(?:what are\s+)?([a-z0-9-]+)(?:'s|\s+)(?:type\s+)?weaknesses[?.!]*$",
+        normalized,
+        re.IGNORECASE,
+    )
+    if match:
+        name = normalize_identifier(match.group(1))
+        weaknesses = client.get_weaknesses(name)
+        rendered = ", ".join(
+            f"{type_name.title()} ({multiplier:g}x)"
+            for type_name, multiplier in weaknesses.items()
+        )
+        return f"{name.title()} is weak to: {rendered}."
+
+    match = re.search(
+        r"(?:tell me\s+)?(?:the\s+)?evolution chain of\s+([a-z0-9-]+)[?.!]*$",
+        normalized,
+        re.IGNORECASE,
+    )
+    if match:
+        chain = client.get_evolution_chain(match.group(1))
+        paths = [" → ".join(name.title() for name in path) for path in chain.paths]
+        return "Evolution path(s): " + "; ".join(paths) + "."
+
+    raise ValueError(
+        "Mock mode understands faster-than, battle, comparison, weaknesses and "
+        "evolution-chain questions."
+    )
+
+
+def explain_comparison(
+    comparison: PokemonComparison,
+    settings: Settings,
+) -> str:
+    agent = create_agent(
+        model=create_chat_model(settings),
+        tools=[],
+        system_prompt=COMPARISON_PROMPT,
+    )
+    result = agent.invoke(
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": json.dumps(comparison.model_dump(), separators=(",", ":")),
+                }
+            ]
+        }
+    )
+    return _message_text(result["messages"][-1])
+
+
+def mock_comparison_explanation(comparison: PokemonComparison) -> str:
+    first = comparison.first
+    second = comparison.second
+    faster = comparison.stat_winners.get("speed", "tie")
+    total_winner = comparison.stat_winners["total"]
+    if total_winner == "tie":
+        total_sentence = f"Both have the same base-stat total ({comparison.total_first})."
+    else:
+        total_sentence = (
+            f"{total_winner.title()} has the higher base-stat total "
+            f"({first.name.title()}: {comparison.total_first}; "
+            f"{second.name.title()}: {comparison.total_second})."
+        )
+    speed_sentence = (
+        "Their Speed is tied."
+        if faster == "tie"
+        else f"{faster.title()} is faster."
+    )
+    return (
+        f"{first.name.title()} is {'/'.join(first.types)}, while "
+        f"{second.name.title()} is {'/'.join(second.types)}. "
+        f"{total_sentence} {speed_sentence}"
+    )
+
+
+def refine_battle_prediction(
+    prediction: BattlePrediction,
+    first: dict[str, Any],
+    second: dict[str, Any],
+    settings: Settings,
+) -> BattlePrediction:
+    agent = create_agent(
+        model=create_chat_model(settings),
+        tools=[],
+        system_prompt=BATTLE_PROMPT,
+        # Bedrock's native structured-output schema currently rejects numeric
+        # minimum/maximum constraints generated by Pydantic. ToolStrategy keeps
+        # Pydantic validation while using normal tool calling instead.
+        response_format=ToolStrategy(BattlePrediction),
+    )
+    context = {
+        "first": first,
+        "second": second,
+        "deterministic_prediction": prediction.model_dump(),
+    }
+    result = agent.invoke(
+        {"messages": [{"role": "user", "content": json.dumps(context, separators=(",", ":"))}]}
+    )
+    return result["structured_response"]
+
+
+def _pair(match: re.Match[str]) -> tuple[str, str]:
+    return normalize_identifier(match.group(1)), normalize_identifier(match.group(2))
+
+
+def _speed_answer(comparison: PokemonComparison) -> str:
+    first = comparison.first
+    second = comparison.second
+    first_speed = first.stat("speed")
+    second_speed = second.stat("speed")
+    if first_speed == second_speed:
+        return (
+            f"{first.name.title()} and {second.name.title()} have the same base Speed "
+            f"({first_speed})."
+        )
+    winner = first if first_speed > second_speed else second
+    return (
+        f"{winner.name.title()} is faster. "
+        f"{first.name.title()}: {first_speed}; {second.name.title()}: {second_speed}."
+    )
+
+
+def _battle_answer(prediction: BattlePrediction) -> str:
+    reasons = " ".join(prediction.reasons)
+    return (
+        f"{prediction.winner.title()} is the simplified winner "
+        f"(confidence {prediction.confidence:.0%}). {reasons} "
+        f"{prediction.caveats[0]}"
+    )
+
+
+def _message_text(message: Any) -> str:
+    content = message.content
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(
+            block.get("text", "")
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "text"
+        ).strip()
+    return str(content)

@@ -1,0 +1,11 @@
+services:
+  professor:
+    build:
+      context: .
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ${HOME}/.aws:/home/appuser/.aws:ro
+    stdin_open: true
+    tty: true
